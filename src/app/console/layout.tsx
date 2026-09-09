@@ -80,10 +80,11 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
     try {
       setMe(await getMe());
     } catch (err) {
-      // Only send to login when the session is definitively expired (401).
-      // All other errors (network, 5xx) show a retry screen instead.
       if (err instanceof ApiError && err.status === 401) {
-        toLogin();
+        // AT was rejected. Clear it so the next retry() goes through the
+        // refresh path instead of re-sending a dead token.
+        clearTokens();
+        setInitError(true);
       } else {
         setInitError(true);
       }

@@ -44,16 +44,18 @@ export function clearMfaPendingUser() { _mfaPendingUser = null; }
 let refreshing: Promise<void> | null = null;
 
 async function tryRefresh(): Promise<boolean> {
-
   try {
+    // Send the in-memory RT in the body so the API can use it even when the
+    // yesp_rt HttpOnly cookie is scoped to auth.yesp.space (no shared cookie domain).
+    const body = _rt ? JSON.stringify({ refreshToken: _rt }) : undefined;
     const res = await fetch(`${BASE}/auth/token/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // refresh token sent automatically via HttpOnly cookie
+      body,
     });
     if (!res.ok) return false;
     const data = await res.json();
-    setTokens(data.accessToken, data.refreshToken);
+    setTokens(data.accessToken, data.refreshToken ?? "");
     return true;
   } catch {
     return false;
