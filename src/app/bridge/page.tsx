@@ -23,12 +23,16 @@ export default function BridgePage() {
     if (at) {
       setTokens(at, rt);
       history.replaceState(null, "", "/bridge");
+      // External absolute URLs (e.g. admin domain) must use a hard navigation —
+      // router.replace only works within the same origin.
+      if (next.startsWith("http")) { window.location.href = next; return; }
       router.replace(next);
       return;
     }
 
     // No access token in fragment — try silent refresh via HttpOnly RT cookie
     if (getStoredTokens()) {
+      if (next.startsWith("http")) { window.location.href = next; return; }
       router.replace(next);
       return;
     }
