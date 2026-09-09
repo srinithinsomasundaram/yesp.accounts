@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,7 +11,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { isAuthenticated } from "@/lib/session";
-import { getMe, logout, clearTokens, setTokens, type Me } from "@/lib/api";
+import { getMe, logout, clearTokens, setTokens, ApiError, type Me } from "@/lib/api";
 import { Spinner } from "@/components/Spinner";
 
 const AUTH_URL = (process.env.NEXT_PUBLIC_AUTH_URL ?? "https://auth.yesp.space").replace(/\/$/, "");
@@ -48,36 +48,59 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
   const [me, setMe] = useState<Me | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [initError, setInitError] = useState(false);
 
-  useEffect(() => {
-    const toLogin = () => {
-      clearTokens();
-      const next = encodeURIComponent(window.location.pathname || "/console");
-      window.location.href = `${AUTH_URL}/auth/login?next=${next}`;
-    };
-
-    const init = async () => {
-      if (!isAuthenticated()) {
-        // Try silent refresh via HttpOnly RT cookie before sending to login
-        try {
-          const res = await fetch("/api/v1/auth/token/refresh", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-          });
-          if (!res.ok) { toLogin(); return; }
-          const data = await res.json() as { accessToken: string };
-          setTokens(data.accessToken, "");
-        } catch {
-          toLogin();
-          return;
-        }
-      }
-      getMe().then(setMe).catch(toLogin);
-    };
-
-    init();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const toLogin = useCallback(() => {
+    clearTokens();
+    const next = encodeURIComponent(window.location.pathname || "/console");
+    window.location.href = `${AUTH_URL}/auth/login?next=${next}`;
   }, []);
+
+  const init = useCallback(async () => {
+    setInitError(false);
+    if (!isAuthenticated()) {
+      try {
+        const res = await fetch("/api/v1/auth/token/refresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!res.ok) {
+          // Only redirect to login if the server explicitly says the session is invalid.
+          // 5xx or network errors should not auto-logout the user.
+          if (res.status === 401) { toLogin(); return; }
+          setInitError(true); return;
+        }
+        const data = await res.json() as { accessToken: string };
+        setTokens(data.accessToken, "");
+      } catch {
+        // Network error — API unreachable. Keep the user on the page.
+        setInitError(true); return;
+      }
+    }
+    try {
+      setMe(await getMe());
+    } catch (err) {
+      // Only send to login when the session is definitively expired (401).
+      // All other errors (network, 5xx) show a retry screen instead.
+      if (err instanceof ApiError && err.status === 401) {
+        toLogin();
+      } else {
+        setInitError(true);
+      }
+    }
+  }, [toLogin]);
+
+  // Initial auth check
+  useEffect(() => { init(); }, [init]);
+
+  // Re-check auth on bfcache restore (browser back/forward)
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) { setMe(null); setInitError(false); init(); }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [init]);
 
   useEffect(() => { setDrawerOpen(false); }, [pathname]);
 
@@ -89,6 +112,20 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
   }
 
   if (!me) {
+    if (initError) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-3 px-6 text-center">
+          <p className="text-sm font-medium text-slate-700">Unable to connect</p>
+          <p className="text-xs text-slate-400 max-w-xs">Check your internet connection and try again. You will not be logged out.</p>
+          <button
+            onClick={() => init()}
+            className="mt-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-4 animate-fade-in">
         <div className="relative">
@@ -168,10 +205,10 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
 
         {/* Help */}
         <div className="px-3 pb-2 shrink-0">
-          <Link href="/help" className="flex items-center gap-3 px-3 py-2 w-full text-sm text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-all">
+          <a href={`${AUTH_URL}/help`} className="flex items-center gap-3 px-3 py-2 w-full text-sm text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-all">
             <HelpCircle size={16} className="shrink-0" />
             Help & Support
-          </Link>
+          </a>
         </div>
 
         {/* User footer */}
@@ -228,10 +265,10 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
         </div>
 
         <div className="px-3 pb-2 shrink-0">
-          <Link href="/help" onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-3 py-2 w-full text-sm text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-all">
+          <a href={`${AUTH_URL}/help`} onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-3 py-2 w-full text-sm text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-all">
             <HelpCircle size={16} className="shrink-0" />
             Help & Support
-          </Link>
+          </a>
         </div>
 
         <div className="mx-3 mb-3 p-3 rounded-xl border border-slate-200 bg-slate-50 shrink-0">
