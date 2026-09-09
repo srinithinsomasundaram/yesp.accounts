@@ -314,10 +314,7 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
             <img src="/logo.png" alt="Yesp" className="w-5 h-5 object-contain" />
             <span className="text-sm font-semibold text-slate-900">Yesp Accounts</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-700 hidden xs:inline">{displayName.split(" ")[0]}</span>
-            <Avatar initials={initials} avatarUrl={me.avatarUrl} />
-          </div>
+          <Avatar initials={initials} avatarUrl={me.avatarUrl} />
         </header>
 
         {/* Scrollable page area */}
