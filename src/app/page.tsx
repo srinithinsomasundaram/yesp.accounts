@@ -4,6 +4,7 @@ import {
   Shield, Users, Grid, Zap, ArrowRight, ChevronRight,
   Headphones, Ticket, Linkedin, Twitter, Youtube, Instagram
 } from "lucide-react";
+import { NavbarUser } from "@/components/NavbarUser";
 
 const AUTH_URL    = (process.env.NEXT_PUBLIC_AUTH_URL    ?? "https://auth.yesp.space").replace(/\/$/, "");
 const CONSOLE_URL = (process.env.NEXT_PUBLIC_CONSOLE_URL ?? "https://accounts.yesp.space").replace(/\/$/, "");
@@ -90,21 +91,8 @@ export default function LandingPage() {
             <a href="#pricing" className="hover:text-blue-600 transition-colors">Pricing</a>
           </nav>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            <Link
-              href={`${AUTH_URL}/auth/login`}
-              className="text-xs sm:text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors px-2 py-1"
-            >
-              Sign in
-            </Link>
-            <Link
-              href={`${AUTH_URL}/auth/register`}
-              className="px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 transition-all hover:scale-[1.02]"
-            >
-              Create account
-            </Link>
-          </div>
+          {/* Actions — shows user name when logged in, Sign in / Create account otherwise */}
+          <NavbarUser />
         </div>
       </header>
 
