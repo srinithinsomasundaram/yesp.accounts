@@ -39,8 +39,8 @@ export default function BridgePage() {
     })
       .then(async (res) => {
         if (!res.ok) throw new Error("refresh_failed");
-        const data = await res.json() as { accessToken: string };
-        setTokens(data.accessToken, "");
+        const data = await res.json() as { accessToken: string; refreshToken?: string };
+        setTokens(data.accessToken, data.refreshToken ?? "");
         router.replace(next);
       })
       .catch(() => {
