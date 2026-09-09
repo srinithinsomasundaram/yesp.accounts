@@ -70,8 +70,8 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
           if (res.status === 401) { toLogin(); return; }
           setInitError(true); return;
         }
-        const data = await res.json() as { accessToken: string };
-        setTokens(data.accessToken, "");
+        const data = await res.json() as { accessToken: string; refreshToken?: string };
+        setTokens(data.accessToken, data.refreshToken ?? "");
       } catch {
         // Network error — API unreachable. Keep the user on the page.
         setInitError(true); return;
