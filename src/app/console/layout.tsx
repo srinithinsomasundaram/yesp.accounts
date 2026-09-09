@@ -186,14 +186,21 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
       <aside className="hidden md:flex w-[240px] shrink-0 border-r border-slate-200/80 bg-white flex-col">
 
         {/* Brand header */}
-        <div className="h-[60px] flex items-center gap-2.5 px-5 border-b border-slate-100 shrink-0">
-          <div className="flex items-center justify-center w-7 h-7 rounded-lg shrink-0 overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Yesp" className="w-7 h-7 object-contain" />
+        <div className="h-[60px] flex items-center justify-between gap-2.5 px-5 border-b border-slate-100 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center justify-center w-7 h-7 rounded-lg shrink-0 overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="Yesp" className="w-7 h-7 object-contain" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[13px] font-semibold text-slate-900 leading-tight">Yesp Accounts</p>
+              <p className="text-[10px] text-slate-400 leading-tight">Identity & access</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-slate-900 leading-tight">Yesp Accounts</p>
-            <p className="text-[10px] text-slate-400 leading-tight">Identity & access</p>
+          {/* Logged-in user name */}
+          <div className="flex items-center gap-1.5 shrink-0 max-w-[100px]">
+            <Avatar initials={initials} avatarUrl={me.avatarUrl} size="sm" />
+            <span className="text-[11px] font-medium text-slate-700 truncate">{displayName.split(" ")[0]}</span>
           </div>
         </div>
 
@@ -306,7 +313,10 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
             <img src="/logo.png" alt="Yesp" className="w-5 h-5 object-contain" />
             <span className="text-sm font-semibold text-slate-900">Yesp Accounts</span>
           </div>
-          <Avatar initials={initials} avatarUrl={me.avatarUrl} />
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-slate-700 hidden xs:inline">{displayName.split(" ")[0]}</span>
+            <Avatar initials={initials} avatarUrl={me.avatarUrl} />
+          </div>
         </header>
 
         {/* Scrollable page area */}
